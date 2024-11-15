@@ -1,5 +1,5 @@
 # Netflix Movies and TV Shows Data Analysis using SQL
-[Netflix logo](https://github.com/MadhurimaProjects/Netflix_project_sql/blob/main/115480-2560x1440-desktop-hd-netflix-wallpaper-photo.jpg)
+[Netflix logo](https://wallpapercat.com/w/full/1/9/8/116376-2560x1440-desktop-hd-netflix-background-photo.jpg)
 
 
 ## Overview
