@@ -228,7 +228,7 @@ LIMIT 10;
 
 ### 15. Categorize Content Based on the Presence of 'Kill' and 'Violence' Keywords
 
-``WITH rating_table
+``` WITH rating_table
 as
 (
 SELECT 
