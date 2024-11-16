@@ -94,30 +94,30 @@ WHERE release_year = 2020;
 ### 4. Find the Top 5 Countries with the Most Content on Netflix
 
 ```sql
-SELECT * 
-FROM
-(
-    SELECT 
-        UNNEST(STRING_TO_ARRAY(country, ',')) AS country,
-        COUNT(*) AS total_content
-    FROM netflix
-    GROUP BY 1
-) AS t1
-WHERE country IS NOT NULL
-ORDER BY total_content DESC
+SELECT * FROM netflix;
+SELECT 
+	UNNEST(STRING_TO_ARRAY(country,',')) as new_country,
+	COUNT(*) AS total_count
+FROM netflix
+GROUP BY new_country
+ORDER BY 2 DESC
 LIMIT 5;
 ```
 
 **Objective:** Identify the top 5 countries with the highest number of content items.
 
-### 5. Identify the Longest Movie
+### 5. Select the longest movie
 
 ```sql
-SELECT 
-    *
+SELECT *
+FROM
+(SELECT DISTINCT title as movie,
+	split_part(duration,' ',1)::numeric AS duration
 FROM netflix
-WHERE type = 'Movie'
-ORDER BY SPLIT_PART(duration, ' ', 1)::INT DESC;
+WHERE show_type= 'Movie') as t2
+WHERE duration = 
+  (SELECT MAX(split_part(duration, ' ', 1)::numeric) 
+   FROM netflix);
 ```
 
 **Objective:** Find the movie with the longest duration.
@@ -132,20 +132,14 @@ WHERE TO_DATE(date_added, 'Month DD, YYYY') >= CURRENT_DATE - INTERVAL '5 years'
 
 **Objective:** Retrieve content added to Netflix in the last 5 years.
 
-### 7. Find All Movies/TV Shows by Director 'Rajiv Chilaka'
+### 7. Find all the movies or TV shows where Junko Takeuchi is casted
 
 ```sql
-SELECT *
-FROM (
-    SELECT 
-        *,
-        UNNEST(STRING_TO_ARRAY(director, ',')) AS director_name
-    FROM netflix
-) AS t
-WHERE director_name = 'Rajiv Chilaka';
+SELECT * FROM netflix
+WHERE casts ILIKE '%Junko Takeuchi%';
 ```
 
-**Objective:** List all content directed by 'Rajiv Chilaka'.
+**Objective:** List all content directed by 'Junko Takeuchi'.
 
 ### 8. List All TV Shows with More Than 5 Seasons
 
@@ -170,23 +164,18 @@ GROUP BY 1;
 
 **Objective:** Count the number of content items in each genre.
 
-### 10.Find each year and the average numbers of content release in India on netflix. 
+### 10.Find each year and the average numbers of content release in Japan on netflix. 
 return top 5 year with highest avg content release!
 
 ```sql
 SELECT 
-    country,
-    release_year,
-    COUNT(show_id) AS total_release,
-    ROUND(
-        COUNT(show_id)::numeric /
-        (SELECT COUNT(show_id) FROM netflix WHERE country = 'India')::numeric * 100, 2
-    ) AS avg_release
+	EXTRACT(year FROM TO_DATE(date_added,'Month DD ,YYYY')) as year,
+	COUNT(*) as yearly_content,
+	ROUND(COUNT(*)::numeric/(SELECT COUNT(*) FROM netflix WHERE country ILIKE '%Japan%')::numeric*100 ,2)as avg_no_of_content
 FROM netflix
-WHERE country = 'India'
-GROUP BY country, release_year
-ORDER BY avg_release DESC
-LIMIT 5;
+WHERE country ILIKE '%Japan%' 
+GROUP BY 1
+ORDER BY 1 DESC;
 ```
 
 **Objective:** Calculate and rank years by the average number of content releases by India.
@@ -196,7 +185,7 @@ LIMIT 5;
 ```sql
 SELECT * 
 FROM netflix
-WHERE listed_in LIKE '%Documentaries';
+WHERE listed_in ILIKE '%Documentaries';
 ```
 
 **Objective:** Retrieve all movies classified as documentaries.
@@ -211,18 +200,18 @@ WHERE director IS NULL;
 
 **Objective:** List content that does not have a director.
 
-### 13. Find How Many Movies Actor 'Salman Khan' Appeared in the Last 10 Years
+### 13. Find How Many Movies Actor 'Shah Rukh Khan' Appeared in the Last 10 Years
 
 ```sql
 SELECT * 
 FROM netflix
-WHERE casts LIKE '%Salman Khan%'
+WHERE casts LIKE '%Shah Rukh  Khan%'
   AND release_year > EXTRACT(YEAR FROM CURRENT_DATE) - 10;
 ```
 
-**Objective:** Count the number of movies featuring 'Salman Khan' in the last 10 years.
+**Objective:** Count the number of movies featuring 'Shah Rukh Khan' in the last 10 years.
 
-### 14. Find the Top 10 Actors Who Have Appeared in the Highest Number of Movies Produced in India
+### 14. Find the Top 10 Actors Who Have Appeared in the Highest Number of Movies Produced in United States.
 
 ```sql
 SELECT 
@@ -235,23 +224,28 @@ ORDER BY COUNT(*) DESC
 LIMIT 10;
 ```
 
-**Objective:** Identify the top 10 actors with the most appearances in Indian-produced movies.
+**Objective:** Identify the top 10 actors with the most appearances in US-produced movies.
 
 ### 15. Categorize Content Based on the Presence of 'Kill' and 'Violence' Keywords
 
-```sql
+``WITH rating_table
+as
+(
 SELECT 
-    category,
-    COUNT(*) AS content_count
-FROM (
-    SELECT 
-        CASE 
-            WHEN description ILIKE '%kill%' OR description ILIKE '%violence%' THEN 'Bad'
-            ELSE 'Good'
-        END AS category
-    FROM netflix
-) AS categorized_content
-GROUP BY category;
+*,
+	CASE 
+	WHEN
+		 description ILIKE '%kill%' OR
+		 description ILIKE '%violence%' THEN 'Bad content'
+		 ELSE 'Good content'
+	END category
+FROM netflix
+)
+SELECT 
+	category,	
+	COUNT(*)  as total
+FROM rating_table
+GROUP BY 1;
 ```
 
 **Objective:** Categorize content as 'Bad' if it contains 'kill' or 'violence' and 'Good' otherwise. Count the number of items in each category.
